@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "minescript-javaclass-loader",
+	"version": "${version}",
+	"name": "Minescript Javaclass Loader",
+	"description": "",
+	"authors": [
+		"Fuchs07"
+	],
+	"contact": {
+
+	},
+	"license": "MIT",
+	"icon": "assets/minescript-javaclass-loader/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"de.minescript_javaclass_loader.MinescriptJavaclassLoader"
+		]
+	},
+	"mixins": [
+		"minescript-javaclass-loader.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "*",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
