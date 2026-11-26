@@ -2,6 +2,7 @@ package de.minescript_javaclass_loader.compiler;
 
 import javax.tools.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -24,7 +25,7 @@ public class InMemoryCompiler {
         this(true);
     }
 
-    private List<File> getClassPaths(boolean includeModsInClassPath) {
+    private List<File> getClassPaths(boolean includeModsInClassPath) throws FileNotFoundException {
         List<File> classPaths = new ArrayList<>();
         Arrays.stream(System.getProperty("java.class.path").split(File.pathSeparator)).forEach(path -> {
             if (!path.isBlank())
@@ -34,18 +35,18 @@ public class InMemoryCompiler {
             Path modsDirectory = Path.of(System.getProperty("user.dir"), "mods");
             File[] mods = modsDirectory.toFile().listFiles();
             if (mods == null)
-                throw new IllegalArgumentException("Mods folder was not found, expected it at %s".formatted(modsDirectory));
+                throw new FileNotFoundException("Mods folder was not found, expected it at %s".formatted(modsDirectory));
             classPaths.addAll(Arrays.asList(mods));
         }
         return classPaths;
     }
 
-    public Class<?> compileAndLoadClasses(String className, String sourceCode) throws IllegalStateException, ClassNotFoundException {
+    public Class<?> compileAndLoadClasses(String className, String sourceCode) throws ClassNotFoundException {
         compileClasses(className, sourceCode);
         return loadClasses(className);
     }
 
-    public Map<String, byte[]> compileClasses(String className, String sourceCode) throws IllegalStateException {
+    public Map<String, byte[]> compileClasses(String className, String sourceCode) {
         bytecodeFiles = compileToBytecodeFiles(className, sourceCode);
         return getBytecode();
     }
