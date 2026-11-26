@@ -7,57 +7,57 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class InMemoryCompiler {
-    private final String className;
-    private final String sourceCode;
     private final DiagnosticCollector<JavaFileObject> diagnostics;
     private final JavaCompiler compiler;
     private final InMemoryFileManager fileManager;
     private Map<String, JavaBytecodeFile> bytecodeFiles;
 
-    public InMemoryCompiler(String className, String sourceCode) throws IOException {
-        this.className = className;
-        this.sourceCode = sourceCode;
+    public InMemoryCompiler(boolean includeModsInClassPath) throws IOException {
         this.compiler = ToolProvider.getSystemJavaCompiler();
         this.diagnostics = new DiagnosticCollector<>();
         StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(diagnostics, null, null);
-        standardFileManager.setLocation(StandardLocation.CLASS_PATH, getClassPaths());
+        standardFileManager.setLocation(StandardLocation.CLASS_PATH, getClassPaths(includeModsInClassPath));
         this.fileManager = new InMemoryFileManager(standardFileManager);
     }
 
-    private List<File> getClassPaths() {
+    public InMemoryCompiler() throws IOException {
+        this(true);
+    }
+
+    private List<File> getClassPaths(boolean includeModsInClassPath) {
         List<File> classPaths = new ArrayList<>();
         Arrays.stream(System.getProperty("java.class.path").split(File.pathSeparator)).forEach(path -> {
             if (!path.isBlank())
                 classPaths.add(new File(path));
         });
-        Path modsDirectory = Path.of(System.getProperty("user.dir"), "mods");
-        File[] mods = modsDirectory.toFile().listFiles();
-        if (mods == null)
-            throw new IllegalArgumentException("Mods folder was not found, expected it at %s".formatted(modsDirectory));
-        classPaths.addAll(Arrays.asList(mods));
+        if (includeModsInClassPath){
+            Path modsDirectory = Path.of(System.getProperty("user.dir"), "mods");
+            File[] mods = modsDirectory.toFile().listFiles();
+            if (mods == null)
+                throw new IllegalArgumentException("Mods folder was not found, expected it at %s".formatted(modsDirectory));
+            classPaths.addAll(Arrays.asList(mods));
+        }
         return classPaths;
     }
 
-    public Class<?> compileAndLoadClasses() throws IllegalStateException, ClassNotFoundException {
-        compileClasses();
-        return loadClasses();
+    public Class<?> compileAndLoadClasses(String className, String sourceCode) throws IllegalStateException, ClassNotFoundException {
+        compileClasses(className, sourceCode);
+        return loadClasses(className);
     }
 
-    public Map<String, byte[]> compileClasses() throws IllegalStateException {
-        if (bytecodeFiles != null)
-            throw new IllegalStateException("Classes were already compiled!");
-        bytecodeFiles = compileToBytecodeFiles();
+    public Map<String, byte[]> compileClasses(String className, String sourceCode) throws IllegalStateException {
+        bytecodeFiles = compileToBytecodeFiles(className, sourceCode);
         return getBytecode();
     }
 
-    public Class<?> loadClasses() throws ClassNotFoundException {
+    public Class<?> loadClasses(String className) throws ClassNotFoundException {
         if (bytecodeFiles == null)
             throw new IllegalStateException("Compile classes before loading them!");
         ClassLoader classLoader = fileManager.getClassLoader(null);
-        return classLoader.loadClass(this.className);
+        return classLoader.loadClass(className);
     }
 
-    private Map<String, JavaBytecodeFile> compileToBytecodeFiles() {
+    private Map<String, JavaBytecodeFile> compileToBytecodeFiles(String className, String sourceCode) {
         JavaFileObject sourceFile = new JavaSourceCodeFile(className, sourceCode);
         JavaCompiler.CompilationTask task = compiler.getTask(null, fileManager, diagnostics, null, null, List.of(sourceFile));
 
