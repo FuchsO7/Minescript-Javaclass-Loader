@@ -5,11 +5,11 @@ import javax.tools.ForwardingJavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardJavaFileManager;
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class InMemoryFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
-    private final Map<String, JavaBytecodeFile> compiledClasses = new Hashtable<>();
+    private final Map<String, JavaBytecodeFile> compiledClasses = new LinkedHashMap<>();
     private final ClassLoader loader;
 
     public InMemoryFileManager(StandardJavaFileManager fileManager) {

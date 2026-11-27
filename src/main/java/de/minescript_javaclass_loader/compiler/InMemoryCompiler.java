@@ -41,19 +41,19 @@ public class InMemoryCompiler {
         return classPaths;
     }
 
-    public Class<?> compileAndLoadClasses(String className, String sourceCode) throws ClassNotFoundException {
-        compileClasses(className, sourceCode);
-        return loadClasses(className);
+    public Class<?> compileAndLoadClass(String className, String sourceCode) throws ClassNotFoundException {
+        compileClass(className, sourceCode);
+        return loadClass(className);
     }
 
-    public Map<String, byte[]> compileClasses(String className, String sourceCode) {
+    public Map<String, byte[]> compileClass(String className, String sourceCode) {
         bytecodeFiles = compileToBytecodeFiles(className, sourceCode);
         return getBytecode();
     }
 
-    public Class<?> loadClasses(String className) throws ClassNotFoundException {
+    public Class<?> loadClass(String className) throws ClassNotFoundException {
         if (bytecodeFiles == null)
-            throw new IllegalStateException("Compile classes before loading them!");
+            throw new IllegalStateException("Compile a class before loading it!");
         ClassLoader classLoader = fileManager.getClassLoader(null);
         return classLoader.loadClass(className);
     }
@@ -74,5 +74,10 @@ public class InMemoryCompiler {
         Map<String, byte[]> bytecode = new LinkedHashMap<>();
         bytecodeFiles.forEach((name, bytecodeFile) -> bytecode.put(name, bytecodeFile.getBytes()));
         return bytecode;
+    }
+
+    public void clearBytecode() {
+        bytecodeFiles = null;
+        fileManager.getCompiledClasses().clear();
     }
 }
